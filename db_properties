@@ -1,0 +1,7 @@
+[postgresql] 
+url = jdbc: postgresql: // localhost: 5432 / <db_name> 
+Database = <spark_teste> 
+schema = <t1> 
+username = <postgres> 
+password = <casa1234> 
+driver = org.postgresql.Driver
