@@ -4,6 +4,7 @@ from pyspark.sql.functions import col, max, asc, desc, count
 spark = SparkSession.builder.master('local').appName('meu-spark').getOrCreate()
 
 df = spark.read.csv("/home/edudev/Documents/SoulCode/Spark/IMDb movies.csv", header=True, inferSchema=True)
+
 df_group = df.groupBy('country').count()
 # df_group.show()
 
