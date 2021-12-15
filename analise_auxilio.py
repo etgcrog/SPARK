@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import stddev, avg, max, min, col, expr, count, desc, concat, lit, regexp_replace
+from pyspark.sql.functions import stddev, avg, max, min, col, expr, count, desc, concat, lit, regexp_replace, sum
 from pyspark.sql.types import FloatType
 from datetime import datetime
 
@@ -37,10 +37,10 @@ df_outubro = spark.read.csv("/media/edudev/_home/auxilio_emegencial_csv/outubro.
     header=True, inferSchema=True, sep=';', encoding='ISO-8859-1')
 
 #selecionando so as colunas de interesse
-df_tratado_junho = df_junho.select('UF', 'MÊS DISPONIBILIZAÇÃO', 'NOME BENEFICIÁRIO', 'NIS RESPONSÁVEL', 'PARCELA', 'VALOR BENEFÍCIO')
-df_tratado_agosto = df_agosto.select('UF', 'MÊS DISPONIBILIZAÇÃO', 'NOME BENEFICIÁRIO', 'NIS RESPONSÁVEL', 'PARCELA', 'VALOR BENEFÍCIO')
-df_tratado_setembro = df_setembro.select('UF', 'MÊS DISPONIBILIZAÇÃO', 'NOME BENEFICIÁRIO', 'NIS RESPONSÁVEL', 'PARCELA', 'VALOR BENEFÍCIO')
-df_tratado_outubro = df_outubro.select('UF', 'MÊS DISPONIBILIZAÇÃO', 'NOME BENEFICIÁRIO', 'NIS RESPONSÁVEL', 'PARCELA', 'VALOR BENEFÍCIO')
+df_tratado_junho = df_junho.select('UF', 'MÊS DISPONIBILIZAÇÃO', 'NOME BENEFICIÁRIO', 'CPF RESPONSÁVEL', 'NIS RESPONSÁVEL', 'PARCELA', 'VALOR BENEFÍCIO')
+df_tratado_agosto = df_agosto.select('UF', 'MÊS DISPONIBILIZAÇÃO', 'NOME BENEFICIÁRIO', 'CPF RESPONSÁVEL', 'NIS RESPONSÁVEL', 'PARCELA', 'VALOR BENEFÍCIO')
+df_tratado_setembro = df_setembro.select('UF', 'MÊS DISPONIBILIZAÇÃO', 'NOME BENEFICIÁRIO','CPF RESPONSÁVEL', 'NIS RESPONSÁVEL', 'PARCELA', 'VALOR BENEFÍCIO')
+df_tratado_outubro = df_outubro.select('UF', 'MÊS DISPONIBILIZAÇÃO', 'NOME BENEFICIÁRIO', 'CPF RESPONSÁVEL', 'NIS RESPONSÁVEL', 'PARCELA', 'VALOR BENEFÍCIO')
 
 # concatenando os dataframes
 temp1 = df_tratado_junho.union(df_tratado_agosto)
@@ -61,6 +61,7 @@ df = df.na.drop()
 df = df.select(col("UF").alias("uf") \
 ,col("MÊS DISPONIBILIZAÇÃO").alias("mes") \
 ,col("NOME BENEFICIÁRIO").alias("nome") \
+,col("CPF RESPONSÁVEL").alias("cpf") \
 ,col("NIS RESPONSÁVEL").alias("nis")\
 ,col("PARCELA").alias("numero_parcela")\
 ,col("VALOR BENEFÍCIO").alias('valor'))
@@ -70,15 +71,19 @@ new_df = df.withColumn("valor",  regexp_replace("valor",  ","  ,"."))
 new_df2 = new_df.withColumn("valor", col("valor").cast(FloatType()))
 
 #agrupando por nome
-estatisticas = new_df2.groupBy('nome')\
+estatisticas = new_df2.groupBy('nome', 'cpf')\
 .agg(max("valor").alias('maximo')
 , min("valor").alias('minimo')\
 , avg("valor").alias('media')\
+, sum("valor").alias('total_recebido')\
 ,count("valor").alias('quantidade'))
 estatisticas.show(10, truncate = False)
 
 #filtrando por quantidade de auxilios recebidos
-estatisticas.filter(estatisticas['nome'] == "EDUARDO TELES GUIMARAES").show(truncate=False)
+meunome = estatisticas.filter(estatisticas['nome'] == "EDUARDO TELES GUIMARAES").show(truncate=False)
+meunome.show(truncate=False)
+ordernacao_quantidade = estatisticas.orderBy(col('quantidade').desc())
+ordernacao_quantidade.filter(ordernacao_quantidade['quantidade'] > 5).count()
 
 f = datetime.now()
 print(f-i)
