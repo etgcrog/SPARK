@@ -18,6 +18,7 @@ df_vote_int.createOrReplaceTempView('movies')
 spark.sql('select country, count(*) as qtd from movies GROUP BY country ORDER BY qtd desc').show()
 #mesmo resultado em pyspark
 df_qnt = df_vote_int.groupBy('country').count()
+
 df_qnt.orderBy(col('count').desc()).show()
 
 ##################### MESMO RESULTADO ##################################
